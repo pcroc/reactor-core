@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 import reactor.core.CoreSubscriber;
 import reactor.core.Scannable;
@@ -34,6 +35,15 @@ import reactor.test.subscriber.AssertSubscriber;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String> {
+
+	private static List<Runnable> TO_DISPOSE = new ArrayList<>();
+
+	@AfterClass
+	public static void disposeResources() {
+		for (Runnable runnable : TO_DISPOSE) {
+			runnable.run();
+		}
+	}
 
 	@Override
 	protected Scenario<String, String> defaultScenarioOptions(Scenario<String, String> defaultOptions) {
@@ -60,6 +70,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	public void collectAsyncFused() {
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 		Scheduler scheduler = Schedulers.newParallel("test", 3);
+		//getting concurrent cancellation exception, so not adding scheduler to TO_DISPOSE here
 
 		Flux.range(1, 100000)
 		    .parallel(3)
@@ -79,6 +90,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	@Test
 	public void collectAsync() {
 		Scheduler s = Schedulers.newParallel("test", 3);
+		TO_DISPOSE.add(s::dispose);
 		Supplier<List<Integer>> as = () -> new ArrayList<>();
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
@@ -102,6 +114,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	@Test
 	public void collectAsync2() {
 		Scheduler s = Schedulers.newParallel("test", 3);
+		TO_DISPOSE.add(s::dispose);
 		Supplier<List<Integer>> as = () -> new ArrayList<>();
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
@@ -127,6 +140,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	@Test
 	public void collectAsync3() {
 		Scheduler s = Schedulers.newParallel("test", 3);
+		TO_DISPOSE.add(s::dispose);
 		Supplier<List<Integer>> as = () -> new ArrayList<>();
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
@@ -154,6 +168,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	@Test
 	public void collectAsync3Fused() {
 		Scheduler s = Schedulers.newParallel("test", 3);
+		TO_DISPOSE.add(s::dispose);
 		Supplier<List<Integer>> as = () -> new ArrayList<>();
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
@@ -179,6 +194,7 @@ public class ParallelReduceSeedTest extends ParallelOperatorTest<String, String>
 	@Test
 	public void collectAsync3Take() {
 		Scheduler s = Schedulers.newParallel("test", 4);
+		TO_DISPOSE.add(s::dispose);
 		Supplier<List<Integer>> as = () -> new ArrayList<>();
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();

@@ -18,6 +18,7 @@ package reactor.core.publisher;
 
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +29,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -46,6 +48,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FluxGroupByTest extends
                              FluxOperatorTest<String, GroupedFlux<Integer, String>> {
+
+	private static List<Runnable> TO_DISPOSE = new ArrayList<>();
+
+	@AfterClass
+	public static void disposeResources() {
+		for (Runnable runnable : TO_DISPOSE) {
+			runnable.run();
+		}
+	}
 
 	@Override
 	protected Scenario<String, GroupedFlux<Integer, String>> defaultScenarioOptions(Scenario<String, GroupedFlux<Integer, String>> defaultOptions) {
@@ -346,6 +357,7 @@ public class FluxGroupByTest extends
 	@Test
 	public void twoGroupsLongAsyncMerge() {
 		Scheduler scheduler = Schedulers.newElastic("twoGroupsLongAsyncMerge");
+		TO_DISPOSE.add(scheduler::dispose);
 
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
@@ -364,12 +376,15 @@ public class FluxGroupByTest extends
 
 	@Test
 	public void twoGroupsLongAsyncMergeHidden() {
+		final Scheduler scheduler = Schedulers.newElastic("twoGroupsLongAsyncMergeHidden");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts = AssertSubscriber.create();
 
 		Flux.range(1, 1_000_000)
 		    .groupBy(v -> (v & 1))
 		    .flatMap(g -> g.hide())
-		    .publishOn(Schedulers.newElastic("twoGroupsLongAsyncMergeHidden"))
+		    .publishOn(scheduler)
 		    .subscribe(ts);
 
 		ts.await(Duration.ofSeconds(5));
@@ -382,6 +397,8 @@ public class FluxGroupByTest extends
 	@Test
 	public void twoGroupsConsumeWithSubscribe() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsConsumeWithSubscribe");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts3 = AssertSubscriber.create();
@@ -439,6 +456,8 @@ public class FluxGroupByTest extends
 	@Test
 	public void twoGroupsConsumeWithSubscribePrefetchSmaller() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsConsumeWithSubscribePrefetch");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts3 = AssertSubscriber.create();
@@ -505,6 +524,8 @@ public class FluxGroupByTest extends
 	@Test
 	public void twoGroupsConsumeWithSubscribePrefetchBigger() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsConsumeWithSubscribePrefetchBigger");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts3 = AssertSubscriber.create();
@@ -571,6 +592,8 @@ public class FluxGroupByTest extends
 	@Test
 	public void twoGroupsConsumeWithSubscribeHide() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsConsumeWithSubscribeHide");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts3 = AssertSubscriber.create();
@@ -646,6 +669,7 @@ public class FluxGroupByTest extends
 //	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsFullAsyncFullHide() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsFullAsyncFullHide");
+		TO_DISPOSE.add(scheduler::dispose);
 
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
@@ -688,12 +712,16 @@ public class FluxGroupByTest extends
 		    });
 
 		try {
+
 			ts1.await(Duration.ofSeconds(5));
 			ts2.await(Duration.ofSeconds(5));
 			ts3.await(Duration.ofSeconds(5));
 		}
 		catch (Throwable t) {
 			throw new IllegalStateException(DiagnosticCommand.local.threadPrint(), t);
+		}
+		finally {
+			System.out.println(DiagnosticCommand.local.threadPrint());
 		}
 
 		ts1.assertValueCount(500_000)
@@ -714,6 +742,8 @@ public class FluxGroupByTest extends
 	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsFullAsync() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsFullAsync");
+		TO_DISPOSE.add(scheduler::dispose);
+
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts2 = AssertSubscriber.create();
 		AssertSubscriber<Integer> ts3 = AssertSubscriber.create();
