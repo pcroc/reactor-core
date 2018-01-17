@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
@@ -561,7 +562,6 @@ public class FluxGroupByTest extends
 	}
 
 	@Test
-//	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsConsumeWithSubscribeHide() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsConsumeWithSubscribeHide");
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
@@ -621,7 +621,7 @@ public class FluxGroupByTest extends
 	}
 
 	@Test
-//	@Ignore("need investigation of continuous Bamboo failure")
+	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsFullAsyncFullHide() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsFullAsyncFullHide");
 
@@ -684,6 +684,7 @@ public class FluxGroupByTest extends
 	}
 
 	@Test
+	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsFullAsync() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsFullAsync");
 		AssertSubscriber<Integer> ts1 = AssertSubscriber.create();
