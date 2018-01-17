@@ -60,6 +60,7 @@ import static reactor.util.concurrent.WaitStrategy.liteBlocking;
 
 /**
  */
+@Ignore
 public class WorkQueueProcessorTest {
 
 
