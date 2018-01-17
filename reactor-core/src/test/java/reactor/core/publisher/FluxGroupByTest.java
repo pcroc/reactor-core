@@ -16,10 +16,17 @@
 
 package reactor.core.publisher;
 
+import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -620,8 +627,23 @@ public class FluxGroupByTest extends
 
 	}
 
+	public static interface DiagnosticCommand {
+		String threadPrint(String... args);
+
+		DiagnosticCommand local = ((Supplier<DiagnosticCommand>) () -> {
+			try {
+				MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+				ObjectName name = new ObjectName("com.sun.management",
+						"type", "DiagnosticCommand");
+				return JMX.newMBeanProxy(server, name, DiagnosticCommand.class);
+			} catch(MalformedObjectNameException e) {
+				throw new AssertionError(e);
+			}
+		}).get();
+	}
+
 	@Test
-	@Ignore("need investigation of continuous Bamboo failure")
+//	@Ignore("need investigation of continuous Bamboo failure")
 	public void twoGroupsFullAsyncFullHide() {
 		final Scheduler scheduler = Schedulers.newElastic("twoGroupsFullAsyncFullHide");
 
@@ -665,9 +687,14 @@ public class FluxGroupByTest extends
 			    }
 		    });
 
-		ts1.await(Duration.ofSeconds(5));
-		ts2.await(Duration.ofSeconds(5));
-		ts3.await(Duration.ofSeconds(5));
+		try {
+			ts1.await(Duration.ofSeconds(5));
+			ts2.await(Duration.ofSeconds(5));
+			ts3.await(Duration.ofSeconds(5));
+		}
+		catch (Throwable t) {
+			throw new IllegalStateException(DiagnosticCommand.local.threadPrint(), t);
+		}
 
 		ts1.assertValueCount(500_000)
 		   .assertNoError()
